@@ -5,22 +5,20 @@ import {
   ERROR_TIMEOUT,
   ERROR_NO_COMMAND,
 } from 'jest-dev-server'
+import puppeteer from 'puppeteer'
 import chalk from 'chalk'
-import { readConfig, getPuppeteer } from './readConfig'
+import readConfig from './readConfig'
 
 let browser
 
-export async function setup(jestConfig = {}) {
+export async function setup() {
   const config = await readConfig()
-  const puppeteer = getPuppeteer(config)
   if (config.connect) {
     browser = await puppeteer.connect(config.connect)
   } else {
     browser = await puppeteer.launch(config.launch)
   }
   process.env.PUPPETEER_WS_ENDPOINT = browser.wsEndpoint()
-
-  if (jestConfig.watch || jestConfig.watchAll) return
 
   if (config.server) {
     try {
@@ -51,15 +49,13 @@ export async function setup(jestConfig = {}) {
   }
 }
 
-export async function teardown(jestConfig = {}) {
-  if (!jestConfig.watch && !jestConfig.watchAll) {
-    await teardownServer()
+export async function teardown() {
+  await teardownServer()
 
-    const config = await readConfig()
-    if (config.connect) {
-      await browser.disconnect()
-    } else {
-      await browser.close()
-    }
+  const config = await readConfig()
+  if (config.connect) {
+    await browser.disconnect()
+  } else {
+    await browser.close()
   }
 }
